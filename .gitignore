@@ -13,3 +13,9 @@ results
 
 npm-debug.log
 node_modules
+
+*.html
+*.css
+
+*.sublime-workspace
+.DS_Store
