@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <title>Color Playground</title>
+  <style>
+    body, div {
+      margin: 0;
+      padding: 0;
+    }
+    div.list {
+      display: block;
+      margin: 20px 0 0 20px;
+    }
+    div.list span {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      margin-right: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="/apollo.js"></script>
+  <script src="/javascripts/color.js"></script>
+  <script>
+    function testPicker() {
+      var pickers = Picker.series(10);
+      var body = $S('body');
+
+      function renderColorChunk(name) {
+        var chunk = document.createElement('div');
+        chunk.addClass('list');
+        for (var i = 0; i < pickers.length; i++) {
+          var span = document.createElement('span');
+          span.style.backgroundColor = pickers[i][name+'Color'];
+          chunk.appendChild(span);
+        }
+        body.appendChild(chunk);
+      }
+      ['dark','main','vivid','light'].forEach(function(el){
+        renderColorChunk(el);
+      });
+    }
+  </script>
+</body>
+
+</html>
