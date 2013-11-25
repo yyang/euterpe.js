@@ -1,13 +1,15 @@
+// Color Controller;
+
 (function(){
 
-var step = 0.157;
-var sequence = 0;
-var colors = [];
 var rP = 0.299, gP = 0.587, bP = 0.114;
 
 /* HSP Color Model integraded according to Darel Rex Finley.
- * Reference: http://alienryderflex.com/hsp.html
- * In this method, we assuem that 0 <= h,s,p <= 1.
+ * Ref: http://alienryderflex.com/hsp.html
+ * In this method, we assume that 0 <= h <= 360, 0 <= s,p <= 1.
+ * HSL and HSV codes are interaged according to Axon Flux.
+ * Ref: http://axonflux.com/handy-rgb-to-hsl-and-rgb-to-hsv-color-model-c
+ * Modified so that the code satisfies 0 <= h <= 360.
  */
 
 function fromHSVtoRGB(h, s, v) {
@@ -104,7 +106,7 @@ function fromHSPtoRGB(h, s, p) {
       break;
     case 6:
       gH = 6 * (gH - 0 / 6);
-      r = Math.sqrt(P * P / (rP + gP * gH * gH));
+      r = Math.sqrt(p * p / (rP + gP * gH * gH));
       g = r * gH;
       b = 0;
       break;
@@ -180,8 +182,8 @@ function fromHSLtoRGB(h, s, l) {
   }
 }
 
-function fromRGBtoHSP(r, g, b) {
-  r /= 255, g /= 255, b /= 255;
+function fromRGBtoHSP(colorObj) {
+  var r = colorObj.r / 255, g = colorObj.g / 255, b = colorObj.b / 255;
   var max = Math.max(r, g, b), min = Math.min(r, g, b);
   var h, s;
 
@@ -210,8 +212,8 @@ function fromRGBtoHSP(r, g, b) {
   };
 }
 
-function fromRGBtoHSL(r, g, b) {
-  r /= 255, g /= 255, b /= 255;
+function fromRGBtoHSL(colorObj) {
+  var r = colorObj.r / 255, g = colorObj.g / 255, b = colorObj.b / 255;
   var max = Math.max(r, g, b), min = Math.min(r, g, b);
   var h, s, l = (max + min) / 2;
 
@@ -240,8 +242,8 @@ function fromRGBtoHSL(r, g, b) {
   };
 }
 
-function fromRGBtoHSV(r, g, b) {
-  r /= 255, g /= 255, b /= 255;
+function fromRGBtoHSV(colorObj) {
+  var r = colorObj.r / 255, g = colorObj.g / 255, b = colorObj.b / 255;
   var max = Math.max(r, g, b), min = Math.min(r, g, b);
   var h, s, v = max;
 
@@ -271,33 +273,215 @@ function fromRGBtoHSV(r, g, b) {
 }
 
 function parseColor(colorString) {
-
+  var colorArr = []
+  colorArr.push(/^[a-zA-Z]+/.exec(colorString));
+  colorArr.concat(/\((.*?)\)/.exec(colorString)[1].split(',').map(function(el){
+      return parseFloat(el, 10);
+  }));
+  if (colorArr.length === 4) {
+    return colorArr;
+  } else {
+    throw 'Invalid color.';
+  }
 }
 
-/* Provides those interfaces:
- * var color = new Color(name, )
- */
+function getHexString(rgbColorObj) {
+  function toHex(c) {
+    var hex = c.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }
+  return toHex(rgbColorObj.r) + toHex(rgbColorObj.g) + toHex(rgbColorObj.b);
+}
 
-function Color() {
-  if (arguments.length === 0) {
-    throw 'Color has not been specified'
-  } else (arguments.length === 1) {
-    var pasedColor = parseColor(arguments[0]);
-  } else (arguments.length === 4) {
-    switch (arguments[0]) {
-
+function getColorString(mode, color, alpha) {
+  var colorDigits = [];
+  for (var i = 0; i < mode.length; i++) {
+    if (['s','l','v','p'].indexOf(mode[i]) > 0) {
+      colorDigits.push(~~(color[mode[i]] * 100) + '%');
+    } else if (mode[i] === 'a') {
+      if (alpha >= 0 && alpha <= 1) {
+        colorDigits.push(alpha);
+      } else {
+        throw 'Invalid alpha value';
+      }
+    } else {
+      colorDigits.push(color[mode[i]]);
     }
   }
+  return mode + '(' + colorDigits.toString() + ')';
+}
+
+function Color() {
+  switch (arguments.length) {
+    case 0:
+      throw 'Color has not been specified';
+    case 1:
+      var initArr = parseColor(arguments[0]);
+      this.initialize(initArr);
+      break;
+    case 4:
+      var initArr = [].slice.call(arguments);
+      this.initialize(initArr);
+      break;
+    default:
+      throw 'Invalid number of arguments';
+  }
+  return this;
 }
 
 $declare(Color, {
   getColor: function() {
-    if (arguments[0]) {
-
-    } else {
-      return rgbString;
+    if (arguments.length === 0) {
+      return getColorString('rgb', this.rgb);
+    }
+    var mode = arguments[0];
+    switch (mode) {
+      case 'hex':
+        return getHexString(this.rgb);
+      case 'hexString':
+        return '#' + getHexString(this.rgb);
+      case 'rgb':
+        return this.rgb;
+      case 'hsp':
+        return this.hsp;
+      case 'hsv':
+        return fromRGBtoHSV(this.rgb);
+      case 'hsl':
+        return fromRGBtoHSL(this.rgb);
+      case 'rgbString':
+        return getColorString('rgb', this.rgb);
+      case 'hslString':
+        return getColorString('hsl', fromRGBtoHSL(this.rgb));
+      case 'rgba':
+        return getColorString('rgba', this.rgb, arguments[1]);
+      case 'hsla':
+        return getColorString('hsla', fromRGBtoHSL(this.rgb), arguments[1]);
+    }
+  },
+  lighten: function(amount) {
+    return new Color('hsp', this.hsp.h, this.hsp.s, this.hsp.p - amount);
+  },
+  darken: function(amount) {
+    return new Color('hsp', this.hsp.h, this.hsp.s, this.hsp.p + amount);
+  },
+  desaturate: function(amount) {
+    return new Color('hsp', this.hsp.h, this.hsp.s - amount, this.hsp.p);
+  },
+  saturate: function(amount) {
+    return new Color('hsp', this.hsp.h, this.hsp.s + amount, this.hsp.p);
+  },
+  greyscale: function() {
+    return new Color('hsp', 0, 0, this.hsp.p);
+  },
+  initialize: function(initArr) {
+    switch (initArr[0]) {
+      case 'rgb':
+        this.rgb = {r: initArr[1], g: initArr[2], b: initArr[3]};
+        this.hsp = fromRGBtoHSP(this.rgb);
+        break;
+      case 'hsp':
+        this.hsp = {h: initArr[1], s: initArr[2], p: initArr[3]};
+        this.rgb = fromHSPtoRGB(this.hsp.h, this.hsp.s, this.hsp.p);
+        break;
+      case 'hsv':
+        this.rgb = fromHSVtoRGB(initArr[1], initArr[2], initArr[3]);
+        this.hsp = fromRGBtoHSP(this.rgb);
+        break;
+      case 'hsl':
+        this.rgb = fromHSLtoRGB(initArr[1], initArr[2], initArr[3]);
+        this.hsp = fromRGBtoHSP(this.rgb);
+        break;
+      default: 
+        throw 'Invalid color mode.'
     }
   }
+});
+
+$explict('Color', Color);
+
+})();
+
+// Picker Controller;
+
+(function(){
+
+var step = 53, currentHue = 21;
+var pickers = [];
+var pickerId = 0;
+
+function Picker() {
+  // Store it in an array.
+  this.id = pickerId;
+  pickers[pickerId] = this;
+  pickerId ++;
+
+  this.name = arguments[0] ? arguments[0] : '';
+  if (arguments[1]) {
+    this.hue = arguments[1];
+  } else {
+    this.hue = currentHue;
+    currentHue += step;
+  }
+  this.calcColors();
+
+  return this;
+}
+
+$declare(Picker, {
+  calcColors: function() {
+    this.dark = new Color('hsp', this.hue, 0.8, 0.5);
+    this.main = new Color('hsp', this.hue, 0.9, 0.7);
+    this.vivid = new Color('hsp', this.hue, 0.95,0.9);
+    this.light = new Color('hsp', this.hue, 0.6, 1);
+    this.darkColor = this.dark.getColor('rgba', 0.8);
+    this.mainColor = this.main.getColor();
+    this.vividColor = this.vivid.getColor();
+    this.lightColor = this.light.getColor('rgba', 0.8);
+  },
+  shift: function(hue, direction) {
+    if (arguments.length === 1) {
+      direction = 'right';
+    }
+    switch (direction) {
+      case true:
+      case 'right':
+      case 'forward':
+        this.hue += hue;
+        break;
+      case false:
+      case 'left':
+      case 'backward':
+        this.hue -= hue;
+        break;
+    }
+    this.calcColors();
+  }
 })
+
+$define(Picker, {
+  get: function(name) {
+    return pickers.filter(function(el) {
+      return el.name === name;
+    });
+  },
+  series: function(numbers, seriesName) {
+    if (seriesName === undefined) {
+      seriesName = 'colorSeries';
+    }
+    var pickerSeries = [];
+    if (numbers < 7) {
+      for (var i = 0; i < numbers; i++) {
+        pickerSeries.push(new Picker(seriesName, 10 + 53 * i));
+      }
+    } else {
+      for (var i = 0; i < numbers; i++) {
+        pickerSeries.push(new Picker(seriesName, 10 + 29 * i));
+      }
+    }
+    return pickerSeries;
+  }
+})
+
+$explict('Picker', Picker);
 
 })();
