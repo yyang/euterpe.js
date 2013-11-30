@@ -1,10 +1,15 @@
+/* color.js is redistrubuted in another project:
+ * https://github.com/yyang/graphing-at-color
+ */
+
 // Color Controller;
 
 (function(){
 
 var rP = 0.299, gP = 0.587, bP = 0.114;
 
-/* HSP Color Model integraded according to Darel Rex Finley.
+/** 
+ * HSP Color Model integraded according to Darel Rex Finley.
  * Ref: http://alienryderflex.com/hsp.html
  * In this method, we assume that 0 <= h <= 360, 0 <= s,p <= 1.
  * HSL and HSV codes are interaged according to Axon Flux.
@@ -316,8 +321,12 @@ function Color() {
     case 0:
       throw 'Color has not been specified';
     case 1:
-      var initArr = parseColor(arguments[0]);
-      this.initialize(initArr);
+      if (arguments[0] instanceof Color)
+        return arguments[0];
+      else {
+        var initArr = parseColor(arguments[0]);
+        this.initialize(initArr);
+      }
       break;
     case 4:
       var initArr = [].slice.call(arguments);
@@ -397,7 +406,9 @@ $declare(Color, {
   }
 });
 
-$explict('Color', Color);
+$define(window, {
+  Color: Color
+});
 
 })();
 
@@ -460,9 +471,10 @@ $declare(Picker, {
 
 $define(Picker, {
   get: function(name) {
-    return pickers.filter(function(el) {
+    var selectedPickers = pickers.filter(function(el) {
       return el.name === name;
-    });
+    })
+    return (selectedPickers.length === 0) ? false : selectedPickers[0];
   },
   series: function(numbers, seriesName) {
     if (seriesName === undefined) {
@@ -482,6 +494,8 @@ $define(Picker, {
   }
 })
 
-$explict('Picker', Picker);
+$define(window, {
+  Picker: Picker
+});
 
 })();

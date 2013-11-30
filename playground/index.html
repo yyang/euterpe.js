@@ -17,6 +17,7 @@
 </head>
 
 <body>
+  <div id="frame1" style="width:400px;height:400px;"></div>
   <script>
   //var body = document.querySelector('body');
   var data = {
@@ -24,9 +25,20 @@
   "vodka": {"trait": {"generosity": -1.5,"ethical": 1.75,"integrity": 3.5,"humane": 0,"lovehk": 1.5},"media": {"traditional": 0.8074658173731737,"traditional_tv": 0.7650880537468822,"traditional_radio": 0.8265438187758787,"traditional_newspaper": 0.8592657756520801,"traditional_magazine": 0.8425043333368812,"social": 0.845644514104126,"social_hk": 0.8547362239345758,"social_intl": 0.8204051504942884}},
   "whiskey": {"trait": {"generosity": -1.3333333333333333,"ethical": -3.3333333333333335,"integrity": -2.6666666666666665,"humane": -0.6666666666666666,"lovehk": 2},"media": {"traditional": 0.7825853891209835,"traditional_tv": 0.7528987004613329,"traditional_radio": 0.8577775186845004,"traditional_newspaper": 0.783577374671773,"traditional_magazine": 0.8374454037787512,"social": 0.8075163400023762,"social_hk": 0.8258338650954916,"social_intl": 0.7690656210669481}}
   };
+  var options = {
+    upperBound: 5,
+    lowerBound: -7.5,
+    steps: 5
+  }
   </script>
-  <script src="/javascripts/apollo.js"></script>
-  <script src="/javascripts/playground.js"></script>
+  <script src="/javascripts/apollo-client/index.js"></script>
+  <script src="/javascripts/apollo-client/lib.js"></script>
+  <script src="/javascripts/uuid.js"></script>
+  <script src="/javascripts/pub.js"></script>
+  <script src="/javascripts/registry.js"></script>
+  <script src="/javascripts/color.js"></script>
+  <script src="/javascripts/graph.js"></script>
+  <script src="/javascripts/radarchart.js"></script>
 </body>
 
 </html>
