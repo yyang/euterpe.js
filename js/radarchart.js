@@ -5,7 +5,7 @@ var kGraphName = 'radar';
 var kGraphTitle = 'Radar Chart';
 var graphSequence = 1;
 
-function getDataBounds(data, options) {
+function getDataBounds(data, userOptions) {
   var upperValue = Number.MIN_VALUE;
   var lowerValue = Number.MAX_VALUE;
   var bounds;
@@ -18,8 +18,8 @@ function getDataBounds(data, options) {
     }
   }
   bounds = {
-    upperBound: options.upperBound ? options.upperBound : upperValue,
-    lowerBound: options.lowerBound ? options.lowerBound : lowerValue
+    upperBound: userOptions.upperBound ? userOptions.upperBound : upperValue,
+    lowerBound: userOptions.lowerBound ? userOptions.lowerBound : lowerValue
   };
   return $extend(bounds, {diff: bounds.upperBound - bounds.lowerBound});
 }
@@ -70,11 +70,11 @@ $define(RadarChart, {
         ? options.center.y - 40
         : options.center.x - 60;
     // Label Colors
-    options.color = userOptions.color ? new Color(userOptions.color) :
+    options.labelColor = userOptions.color ? new Color(userOptions.color) :
         userOptions.darkBackground ? new Color('rgb', 243, 243, 243) :
         new Color('rgb', 16, 16, 16);
     // Scale
-    options.bounds = getDataBounds(graphObj.data, options);
+    options.bounds = getDataBounds(graphObj.data, userOptions);
     options.stepLength = userOptions.stepLength ? userOptions.stepLength :
         userOptions.steps ? options.bounds.diff / userOptions.steps:
         options.bounds.diff / 5;
@@ -99,7 +99,7 @@ $inherit(RadarChart, Graph, {
     this.svg.appendChild(title);
     // Render Axis
     this.renderBase();
-    for (var i = 0; i < this.data.length; i++) {
+    for (var i = this.data.length - 1; i >= 0; i--) {
       this.renderData(this.data[i]);
     }
   },
@@ -123,6 +123,11 @@ $inherit(RadarChart, Graph, {
     }
     gAxis.addClass('axis');
     this.svg.appendChild(gAxis);
+    this._setCSSRule('path.axis', {
+      stroke: this.options.labelColor.getColor('rgba', 0.8),
+      strokeWidth: '2px',
+      fill: 'none'
+    });
 
     // Render guide
     var gGuide = document.createElementNS(kSvgNS, 'g');
@@ -142,6 +147,10 @@ $inherit(RadarChart, Graph, {
     }
     gGuide.addClass('guide');
     this.svg.appendChild(gGuide);
+    this._setCSSRule('path.guide', {
+      stroke: this.options.labelColor.getColor('rgba', 0.2),
+      fill: 'none'
+    });
 
     // Render label
     var gLabel = document.createElementNS(kSvgNS, 'g');
@@ -152,6 +161,9 @@ $inherit(RadarChart, Graph, {
         y: center.y - armLength * Math.cos(i * 2*Math.PI / axis) * 1.1
       });
       label.setTextValue(this.options.axisList[i].label);
+      label.setAttributeNS(null, 'text-anchor',
+          (i / axis === 0.5 || i === 0) ? 'middle' :
+          (i / axis > 0.5) ? 'end' : 'start');
       label.addClass(this.options.axisList[i].id);
       gLabel.appendChild(label);
     }
@@ -197,6 +209,27 @@ $inherit(RadarChart, Graph, {
     path.addClass('line').addClass(data.id);
     gData.addClass(data.id);
     gData.insertBefore(path, gData.firstChild);
+
+    this._setCSSRules([{
+      selector: 'circle.' + data.id,
+      style: {
+        stroke: data.picker.darkColor,
+        strokeWidth: '2px',
+        fill: data.picker.lightColor
+      }
+    },{
+      selector: 'path.' + data.id,
+      style: {
+        stroke: data.picker.mainColor,
+        strokeWidth: '2px',
+        fill: data.picker.light.getColor('rgba', 0.2)
+      }
+    },{
+      selector: 'g.' + data.id + ':hover path, g.' + data.id + '.active path',
+      style: {
+        fill: data.picker.lightColor
+      }
+    }]);
 
     this.svg.appendChild(gData);
   }

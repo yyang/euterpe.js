@@ -87,7 +87,7 @@ $define(Graph, {
 $declare(Graph, {
   _graph: function(type, container, data, options) {
     // Initiate graph in graphInstances storage;
-    this.id = uuid.v1();
+    this.id = Registry.get('graph');
     graphInstances[this.id] = this;
     this.type = type;
     // Container Element;
@@ -101,7 +101,8 @@ $declare(Graph, {
         'version': '1.1',
         'width': this.canvasSize.w,
         'height': this.canvasSize.h,
-        'id': this.id
+        'id': this.id,
+        'class': this.type
       });
     // CSS Style Sheet;
     var styleSheet = document.head.appendChild(document.createElement('style'));
@@ -118,6 +119,17 @@ $declare(Graph, {
     this.render();
     // Insert
     this.container.insertBefore(this.svg, null);
+  },
+  _setCSSRule: function(innerSelector, style) {
+    this.css.appendRule(innerSelector, style);
+  },
+  _setCSSRules: function(rules) {
+    if (rules instanceof Array)
+      for (var i = 0; i < rules.length; i++)
+        this._setCSSRule(rules[i].selector, rules[i].style);
+    else
+      for (var selector in rules)
+        this._setCSSRule(selector, rules[selector]);
   },
   showSeries: function(name) {
 
