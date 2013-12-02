@@ -12,7 +12,7 @@
       transition: all 0.3s ease-in-out;
     }
     .HIDE {
-      opacity: 0;
+      display: none;
     }
     .HIDE-animation {
       opacity: 0;
@@ -25,7 +25,7 @@
 </head>
 
 <body>
-  <div id="frame1" style="width:400px;height:400px;"></div>
+  <div id="frame1" style="position: fixed;left:100px;right: 100px;top:100px;bottom: 100px;"></div>
   <script>
   //var body = document.querySelector('body');
   var data = {

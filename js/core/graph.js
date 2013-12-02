@@ -141,7 +141,7 @@ $declare(Graph, {
     return svg;
   },
   _setCSSRule: function(innerSelector, style) {
-    this.css.appendRule(innerSelector, style);
+    this.css.appendRule('#' + this.id + ' ' + innerSelector, style);
   },
   _setCSSRules: function(rules) {
     if (rules instanceof Array)
@@ -186,10 +186,10 @@ $declare(Graph, {
       }
     });
   },
-  previewSeries: function(name, preveiw) {
+  previewSeries: function(name, preview) {
     this.data.forEach(function(el) {
       if (el.name === name) {
-        if (preview && el.status === 'hide') {
+        if (preview && el.status === 'hidden') {
           el.g.addClass('HIDE-animation', 300).addClass('PREVIEW').show();
           el.status = 'preview';
         } else if ((!preview) && el.status === 'preview') {
@@ -220,15 +220,16 @@ $declare(Graph, {
       }
   },
   registerActions: function(selectorAll, type, listener, eventCapture) {
-    [].slice.call(document.querySelectorAll(selectorAll)).forEach(function(el){
-      el.addEventListener(type, listener, eventCapture);
-    });
+    [].slice.call(document.querySelectorAll('#' + this.id + ' ' + selectorAll))
+      .forEach(function(el){
+        el.addEventListener(type, listener, eventCapture);
+      });
   },
   refresh: function() {
-    this.resize(this.container.getSize());
+    this._resize(this.container.getSize());
   },
   resize: function(canvasSize) {
-    this.resize(canvasSize);
+    this._resize(canvasSize);
   }
 });
 
@@ -242,11 +243,12 @@ $declare(Graph, {
 /**
  * @typedef GraphType.prototype
  * @type {GraphTypeInstance.prototype}
- * @property {Function} _graphParams
- * @property {Function} _sizeParams
- * @property {Function} render
- * @property {Function} setStyle
- * @property {Function} renderData
+ * @property {Function} _graphParams  Generates graph parameters and stores in 
+ *                                    this.params
+ * @property {Function} _sizeParams   Generates or renew size parameters.
+ * @property {Function} render        Render the entire graph.
+ * @property {Function} setStyle      Set style for different states.
+ * @property {Function} renderData    Render a new piece of data
  */
 
 function GraphType() {}
@@ -267,6 +269,10 @@ $define(GraphType, {
 function allGraph() {}
 
 $define(allGraph, {
+  _refresh: function() {
+    for (var key in graphInstances)
+      graphInstances[key].refresh();
+  },
   showSeries: function(name) {
     for (var key in graphInstances)
       graphInstances[key].showSeries(name);
@@ -282,8 +288,22 @@ $define(allGraph, {
   previewSeries: function(name, preview) {
     for (var key in graphInstances)
       graphInstances[key].previewSeries(name, preview);
-  }
+  },
+  get automaticResize() {
+    return allGraph._automaticResizeSetting;
+  },
+  set automaticResize(refresh) {
+    if (allGraph._automaticResizeSetting !== refresh) {
+      if (refresh) window.addEventListener('resize', allGraph._refresh, false);
+      else window.removeEventListener('resize', allGraph._refresh, false);
+      allGraph._automaticResizeSetting = refresh;
+    }
+  },
+  _automaticResizeSetting: true
 })
+
+window.addEventListener('resize', allGraph._refresh, false);
+
 
 $define(window, {
   Graph: Graph,

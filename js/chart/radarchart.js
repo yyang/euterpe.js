@@ -136,6 +136,12 @@ $inherit(RadarChart, Graph, {
         style: {
           fill: this.data[i].picker.lightColor
         }
+      },{
+        selector: 'g.' + this.data[i].id + '.PREVIEW path',
+        style: {
+          stroke: this.data[i].picker.main.getColor('rgba', 0.8),
+          fill: 'none'
+        }
       }]);
     }
   },
