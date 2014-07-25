@@ -130,6 +130,15 @@ $declare(Graph, {
     // Render
     this.svg = this._createSVG();
     this.render();
+    if (graphTypes[this.type].__multidataset) {
+      this.data.forEach(function(el) {
+        if (el.status === 'hidden') {
+          el.g.hide();
+        } else if (el.status === 'active') {
+          el.g.addClass('ACTIVE');
+        }
+      });
+    }
     this.container.appendChild(this.svg);
   },
   _createSVG: function() {
