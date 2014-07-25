@@ -407,7 +407,7 @@ $declare(Color, {
 });
 
 $define(window, {
-  Color: Color
+  'Color': Color
 });
 
 })();
@@ -495,7 +495,7 @@ $define(Picker, {
 })
 
 $define(window, {
-  Picker: Picker
+  'Picker': Picker
 });
 
 })();

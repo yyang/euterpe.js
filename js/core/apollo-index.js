@@ -712,15 +712,15 @@ $define(Boolean, {
   }
 });
 
-$define(RegExp, {
-  /**
-   * Escape a string to work within a regular expression
-   * @param  {string} str string to escape
-   * @return {strign}     escaped string
-   */
-  escape: function(str) {
-    return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  }
-});
+//$define(RegExp, {
+//  /**
+//   * Escape a string to work within a regular expression
+//   * @param  {string} str string to escape
+//   * @return {strign}     escaped string
+//   */
+//  escape: function(str) {
+//    return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+//  }
+//});
 
 })();

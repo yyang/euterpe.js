@@ -22,6 +22,11 @@ $define(Array, {
  */
 
 $define(Node.prototype, {
+  ancestorOf: function(node, noself) {
+    for (node = noself ? this.parentNode : node; node; node = node.parentNode)
+      if (this === node) return true;
+    return false;
+  },
   setAttributes: function (attributes) {
     for (var key in attributes)
       this.setAttribute(key, attributes[key]);
@@ -80,7 +85,8 @@ $define(Element.prototype, {
 });
 
 /**
- * Redistributed from Apollo.js
+ * Element class operations, differentiated HTMLElement and SVGElement  
+ * in order to comply with HTML and SVG standards.
  */
 
 function hideClassAfterDuration(el, cls, duration) {
@@ -93,7 +99,7 @@ function hideClassAfterDuration(el, cls, duration) {
   el.setData('apolloTimers', timers, true);
 }
 
-$define(Element.prototype, document.documentElement.classList ? {
+$define(HTMLElement.prototype, document.documentElement.classList ? {
   addClass: function(cls, duration) {
     this.classList.add(cls);
     if (duration)
@@ -115,7 +121,8 @@ $define(Element.prototype, document.documentElement.classList ? {
   addClass: function(cls, duration) {
     if (!this.hasClass(cls))
       this.className += ' ' + cls;
-    hideClassAfterDuration(this, cls, duration);
+    if (duration)
+      hideClassAfterDuration(this, cls, duration);
     return this;
   },
   removeClass: function(cls) {
@@ -130,13 +137,47 @@ $define(Element.prototype, document.documentElement.classList ? {
   }
 });
 
+$define(SVGElement.prototype, {
+  addClass: function(cls, duration) {
+    if (!this.hasClass(cls)) {
+      if (this.getAttribute('class'))
+        this.setAttribute('class', this.getAttribute('class') + ' ' + cls);
+      else
+        this.setAttribute('class', cls);
+    }
+    if (duration)
+      hideClassAfterDuration(this, cls, duration);
+    return this;
+  },
+  removeClass: function(cls) {
+    if (this.hasClass(cls)) {
+      if (this.getAttribute('class') === cls)
+        this.removeAttribute('class')
+      else
+        this.setAttribute('class', this.getAttribute('class').replace(new RegExp('\\s*\\b' + cls + '\\b', 'g'), ''));
+    }
+    return this;
+  },
+  hasClass: function(cls) {
+    return (new RegExp('\\b' + cls + '\\b')).test(this.getAttribute('class'));
+  },
+  toggleClass: function(cls) {
+    return this.hasClass(cls) ? this.removeClass(cls) : this.addClass(cls);
+  }
+});
+
+/**
+ * Element data operations, differentiated HTMLElement and SVGElement  
+ * in order to comply with HTML and SVG standards.
+ */
+
 function toDatasetName(name) {
   return 'data-' + name.replace(/[A-Z]/g, function(cap) {
     return '-' + cap.toLowerCase();
   });
 }
 
-$define(Element.prototype, document.documentElement.dataset ? {
+$define(HTMLElement.prototype, document.documentElement.dataset ? {
   setData: function(name, value, json) {
     if (json)
       value = JSON.stringify(value);
@@ -154,6 +195,25 @@ $define(Element.prototype, document.documentElement.dataset ? {
     return this;
   }
 } : {
+  setData: function(name, value, json) {
+    if (json)
+      value = JSON.stringify(value);
+    this.setAttribute(toDatasetName(name), value);
+    return this;
+  },
+  getData: function(name, json) {
+    var value = this.getAttribute(toDatasetName(name)) || undefined;
+    if (value && json)
+      return JSON.parse(value);
+    return value;
+  },
+  removeData: function(name) {
+    this.removeAttribute(toDatasetName(name));
+    return this;
+  }
+});
+
+$define(SVGElement.prototype, {
   setData: function(name, value, json) {
     if (json)
       value = JSON.stringify(value);

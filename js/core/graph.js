@@ -94,7 +94,10 @@ $declare(Graph, {
         ? container
         : document.querySelector(container);
     // Parameters and Data
-    this.data = wrapDataObj(data);
+    if (graphTypes[type].__multidataset === false)
+      this.data = data;
+    else
+      this.data = wrapDataObj(data);
     this._params(options);
     // SVG Element;
     this.svg = this._createSVG();
@@ -152,6 +155,8 @@ $declare(Graph, {
         this._setCSSRule(selector, rules[selector]);
   },
   showSeries: function(name) {
+    if (graphTypes[this.type].__multidataset === false)
+      return;
     this.data.forEach(function(el) {
       if (el.name === name) {
         if (el.status === 'hidden')
@@ -163,6 +168,8 @@ $declare(Graph, {
     });
   },
   hideSeries: function(name) {
+    if (graphTypes[this.type].__multidataset === false)
+      return;
     this.data.forEach(function(el) {
       if (el.name === name) {
         el.g.addClass('HIDE-animation', 300);
@@ -174,6 +181,8 @@ $declare(Graph, {
     });
   },
   highlightSeries: function(name, highlight) {
+    if (graphTypes[this.type].__multidataset === false)
+      return;
     this.data.forEach(function(el) {
       if (el.name === name) {
         if (highlight && el.status === 'show') {
@@ -187,6 +196,8 @@ $declare(Graph, {
     });
   },
   previewSeries: function(name, preview) {
+    if (graphTypes[this.type].__multidataset === false)
+      return;
     this.data.forEach(function(el) {
       if (el.name === name) {
         if (preview && el.status === 'hidden') {
@@ -199,6 +210,25 @@ $declare(Graph, {
           }, 300);
           el.status = 'hidden';
         }
+      }
+    });
+  },
+  toggleSeries: function(name) {
+    if (graphTypes[this.type].__multidataset === false)
+      return;
+    this.data.forEach(function(el) {
+      if (el.name === name && el.status === 'show') {
+        el.g.addClass('HIDE-animation', 300);
+        setTimeout(function(){
+          el.g.hide();
+        }, 300);
+        el.status = 'hidden';
+      } else if (el.name === name) {
+        if (el.status === 'hidden')
+          el.g.addClass('HIDE-animation', 300).show();
+        else if (el.status === 'preview')
+          el.g.removeClass('PREVIEW');
+        el.status = 'show';
       }
     });
   },
@@ -222,6 +252,7 @@ $declare(Graph, {
   registerActions: function(selectorAll, type, listener, eventCapture) {
     [].slice.call(document.querySelectorAll('#' + this.id + ' ' + selectorAll))
       .forEach(function(el){
+        el.addClass('action-registered');
         el.addEventListener(type, listener, eventCapture);
       });
   },
@@ -230,6 +261,9 @@ $declare(Graph, {
   },
   resize: function(canvasSize) {
     this._resize(canvasSize);
+  },
+  dispose: function() {
+    this.svg.parentNode.removeChild(this.svg);
   }
 });
 
@@ -288,6 +322,16 @@ $define(allGraph, {
   previewSeries: function(name, preview) {
     for (var key in graphInstances)
       graphInstances[key].previewSeries(name, preview);
+  },
+  toggleSeries: function(name, preview) {
+    for (var key in graphInstances)
+      graphInstances[key].toggleSeries(name, preview);
+  },
+  dispose: function() {
+    for (var key in graphInstances) {
+      graphInstances[key].dispose();
+      delete graphInstances[key];
+    }
   },
   get automaticResize() {
     return allGraph._automaticResizeSetting;
