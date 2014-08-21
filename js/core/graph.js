@@ -118,7 +118,7 @@ $declare(Graph, {
     this.canvasSize = this.container.getSize();
     this.title = options.title ? options.title :
       graphTypes[this.type].__title + ' ' + graphTypes[this.type].__sequence++;
-    if (this.__proto__._graphParams instanceof Function)
+    if (Object.getPrototypeOf(this)._graphParams instanceof Function)
       this._graphParams(options);
   },
   _resize: function(canvasSize) {
